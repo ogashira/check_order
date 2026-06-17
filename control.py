@@ -50,6 +50,18 @@ class Control:
         # df['受注日'],df['出荷予定日'],df['納期']を2025/10/17の形にする
         date_manage = DateManage()
         df_order = date_manage.change_to_date(df_order)
+        '''
+        ミキ情報では文字列のnullはすべて「" "」(半角スペース)と聞いていたのに、
+        MDESTN.DesNonyuCDは、「""」(空文字)だった。そこで、空文字だったら半角スペースに
+        変換するコードを追加した
+        '''
+        df_order['工場コード'] = df_order['工場コード'].map(
+                                               lambda x: ' ' if x=='' else x)
+        # TODO テスト期間中は受注データに工場コードが入っていないので、ない場合は@0002とする
+        df_order['工場コード'] = df_order['工場コード'].map(
+                                               lambda x: '@0002' if x==' ' else x)
+
+
         
         # df_orderにMDESTN_U2002をmergeする
         selectMdestn: ISelectData = SelectMdestn()
@@ -62,7 +74,7 @@ class Control:
         df_mdestn['納入先コード'] = df_mdestn['納入先コード'].map(
                                                lambda x: ' ' if x=='' else x)
         df_order = pd.merge(df_order, df_mdestn, 
-                             on=['得意先コード', '納入先コード'], how='left')
+                             on=['工場コード', '得意先コード', '納入先コード'], how='left')
 
 
         # カラムを整理しておく

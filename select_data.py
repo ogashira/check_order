@@ -33,7 +33,7 @@ class SelectOrder(ISelectData):
                     " RJYUCH.RjcNonyuNam1, RJYUCH.RjcNonyuNam2,"
                     " RJYUCD.RjcHinCD, RJYUCD.RjcHinNam, RJYUCD.RjcJcSu," 
                     " RJYUCD.RjcTniCD, RJYUCD.RjcCMNo, RJYUCD.RjcMBiko," 
-                    " RJYUCH.RjcHBiko, RJYUCD.RjcNODay"
+                    " RJYUCH.RjcHBiko, RJYUCD.RjcNODay, RJYUCD.RjcJcKojCD"
                     " From dbo.RJYUCD"
                     " JOIN dbo.RJYUCH"
                     " ON RJYUCD.RjcJCNo = RJYUCH.RjcJCNo"
@@ -51,7 +51,7 @@ class SelectOrder(ISelectData):
                      'RjcHinNam': '品名', 'RjcJcSu': '受注数量', 
                      'RjcTniCD': '受注単位', 'RjcCMNo': '得意先注文No', 
                      'RjcMBiko': '備考1', 'RjcHBiko': '備考2', 
-                     'RjcNODay': '納期'})
+                                'RjcNODay': '納期', 'RjcJcKojCD': '工場コード'})
         #df = df.sort_values(['得意先コード','納入先コード'])
         #df = df.reset_index(drop = True)
 
@@ -132,7 +132,8 @@ class SelectMdestn(ISelectData):
 
         # cursor = cnxn.cursor()
 
-        sqlQuery = ("SELECT DesTokCD AS '得意先コード'," 
+        sqlQuery = ("SELECT DesKojCD as '工場コード',"
+                    " DesTokCD AS '得意先コード'," 
                     " DesNonyuCD AS '納入先コード',"
                     " DesLeadTime AS '所要日数',"
                     " DesIsExport AS 'isExport'"
