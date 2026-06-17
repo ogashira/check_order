@@ -105,8 +105,8 @@ class Control:
         df_order['isValidShipSaturday'] = df_order['valid_ship_date'].map(
                                                     valid_ship_date.is_Saturday)
 
-        # 輸出製品check
-        export_product_check = ExportProductCheck()
+        # 輸出製品check df_mdestn = MDESTN_U2002のDataFrame
+        export_product_check = ExportProductCheck(df_mdestn)
         df_order['isExport'] = df_order.apply(
                                         export_product_check.is_export, axis= 1)
         df_order['destination'] = df_order.apply(

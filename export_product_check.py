@@ -1,22 +1,21 @@
 import platform
 import csv
 from typing import List
+import pandas as pd
+from get_idx import GetIdx
+
 
 class ExportProductCheck:
 
-    def __init__(self)-> None:
+    def __init__(self, df_mdestn: pd.DataFrame)-> None:
 
         file_nhm: str = './n&h&m_modify.csv'
-        file_unsoutaiou: str = './unsoutaiou_toke.csv'
         if platform.system() == 'Windows':
             file_nhm = f'//192.168.1.247/共有/受注check/master/n&h&m_modify.csv'
-            file_unsoutaiou = f'//192.168.1.247/共有/経理課ﾌｫﾙﾀﾞ/運賃計算関係/unsoutaiou_toke.csv'
         if platform.system() == 'Linux':
             file_nhm = f'/mnt/public/受注check/master/n&h&m_modify.csv'
-            file_unsoutaiou = f'/mnt/public/経理課ﾌｫﾙﾀﾞ/運賃計算関係/unsoutaiou_toke.csv'
         if platform.system() == 'Darwin':
             file_nhm = f'/Volumes/共有/受注check/master/n&h&m_modify.csv'
-            file_unsoutaiou = f'/Volumes/共有/経理課ﾌｫﾙﾀﾞ/運賃計算関係/unsoutaiou_toke.csv'
 
         self.__nhm_mtx: List[List[str]] = []
         with open(file_nhm, newline='', encoding='cp932') as f:
@@ -24,11 +23,10 @@ class ExportProductCheck:
             next(reader) # 1行目をスキップ
             self.__nhm_mtx = [row for row in reader]
 
-        self.__unsoutaiou_mtx: List[List[str]] = []
-        with open(file_unsoutaiou, newline='', encoding='cp932') as f:
-            reader = csv.reader(f)
-            next(reader) # 1行目をスキップ
-            self.__unsoutaiou_mtx = [row for row in reader]
+        # df_mdestn = MDESTN_U2002のDataFrame をリストにする
+        self.__mdestn_mtx: List[List[str]] = df_mdestn.to_numpy().tolist()
+        self.__mdestn_col: List[str] = df_mdestn.columns.tolist()
+        self.__getIdx = GetIdx()
 
 
     def is_export(self, df_row)-> bool:
@@ -40,12 +38,16 @@ class ExportProductCheck:
         nonyu_cd: str = df_row['納入先コード']
         isExport: bool = False
         tmp_nonyu: str = ' '
-        for line in self.__unsoutaiou_mtx:
-            tmp_nonyu = line[16]
-            if line[16] == '':
+
+        tokui_idx: int = self.__getIdx.get_idx(self.__mdestn_col, '得意先コード')
+        nonyu_idx: int = self.__getIdx.get_idx(self.__mdestn_col, '納入先コード')
+        isExp_idx: int = self.__getIdx.get_idx(self.__mdestn_col, 'isExport')
+        for line in self.__mdestn_mtx:
+            tmp_nonyu = line[nonyu_idx]
+            if tmp_nonyu == '':
                 tmp_nonyu = ' '
-            if tokui_cd == line[15] and nonyu_cd == tmp_nonyu:
-                return line[14] == 'y'
+            if tokui_cd == line[tokui_idx] and nonyu_cd == tmp_nonyu:
+                return line[isExp_idx] == 1 # MDESTN_U2002では輸出"y"は　1 
         return isExport
 
 
