@@ -1,0 +1,16 @@
+__pycache__
+*.py~
+*.un~
+*.ini
+*.ini~
+*.xlsx
+./yaml/
+*.yaml
+*.bat
+*.png
+*.jpg
+*.pdf
+*.txt
+pngs/
+*.json
+cybozu_ini/
