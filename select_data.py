@@ -1,6 +1,6 @@
 import warnings
 import pandas as pd
-from typing import List
+from typing import List, Any, Tuple
 from abc import ABC, abstractmethod
 from sql_server import SqlServer as SqlServer
 from sql_server_test import SqlServer as TestSqlServer
@@ -145,3 +145,88 @@ class SelectMdestn(ISelectData):
         ss.close()
 
         return df
+
+
+class SelectCalenderUnsouya:
+
+    def __init__(self, minYM:str, maxYM:str) -> None:
+        self._minYM = minYM
+        self._maxYM = maxYM
+
+    def select_data(self) -> Tuple[List[str],List[List[Any]]]:
+        ss: SqlServer = SqlServer()
+        cnxn = ss.get_cnxn()
+        cursor = cnxn.cursor()
+
+        sqlQuery = ("SELECT CalYM AS 'YYYYMM',"
+                    " CalDay AS 'DD',"
+                    " CalYobiJ AS 'Week',"
+                    " CalFlg AS 'holiday'"
+                    " FROM MCALEN"
+                    " WHERE CalKojCD = '@0001'" 
+                    " AND CalBuCD = 'DUMMY'"
+                    " AND CalYM >=" + self._minYM +
+                    " AND CalYM <=" + self._maxYM +
+                    " ORDER BY CalYM, CalDay"
+                    )
+
+        data_list: List[List[Any]] = []
+        cursor.execute(sqlQuery)
+
+        # 1. カラム名を取得（リスト内包表記）
+        # cursor.description は (名前, 型, 表示サイズ, ...) というタプルのリスト
+        columns = [column[0] for column in cursor.description]
+
+        # 4. 2次元リストへ変換
+        # fetchall() はタプルのリストを返すため、リスト内包表記で各行をリスト化します
+        try:
+            data_list = [list(row) for row in cursor.fetchall()]
+        except Exception as e:
+            raise Exception(f'データベースfetch中に予期せぬエラーです FetchCalenderUnsouya') from e
+        finally:
+            ss.close()
+
+        return columns, data_list
+
+
+class SelectCalenderToyo:
+
+    def __init__(self, minYM:str, maxYM:str) -> None:
+        self._minYM = minYM
+        self._maxYM = maxYM
+
+
+    def select_data(self) -> Tuple[List[str],List[List[Any]]]:
+        ss: SqlServer = SqlServer()
+        cnxn = ss.get_cnxn()
+        cursor = cnxn.cursor()
+
+
+        sqlQuery = ("SELECT CalYM AS 'YYYYMM',"
+                    " CalDay AS 'DD',"
+                    " CalYobiJ AS 'Week',"
+                    " CalFlg AS 'holiday'"
+                    " FROM MCALEN"
+                    " WHERE CalKojCD = '@@@@@'" 
+                    " AND CalYM >=" + self._minYM +
+                    " AND CalYM <=" + self._maxYM +
+                    " ORDER BY CalYM, CalDay"
+                    )
+
+        data_list: List[List[Any]] = []
+        cursor.execute(sqlQuery)
+
+        # 1. カラム名を取得（リスト内包表記）
+        # cursor.description は (名前, 型, 表示サイズ, ...) というタプルのリスト
+        columns = [column[0] for column in cursor.description]
+
+        # 4. 2次元リストへ変換
+        # fetchall() はタプルのリストを返すため、リスト内包表記で各行をリスト化します
+        try:
+            data_list = [list(row) for row in cursor.fetchall()]
+        except Exception as e:
+            raise Exception(f'データベースfetch中に予期せぬエラーです FetchCalenderToyo') from e
+        finally:
+            ss.close()
+
+        return columns, data_list

@@ -32,6 +32,8 @@ class Control:
         select_order: ISelectData = SelectOrder(orderDate_and_userId[0], 
                                                        orderDate_and_userId[1])
 
+        orderDate: str = orderDate_and_userId[0]
+
         '''テスト用モックデータ'''
         # select_order: ISelectData = SelectOrder_Test()
         
@@ -93,8 +95,9 @@ class Control:
                              '納期', '備考2', 'Check', '所要日数']])
         df_order = df_order.rename(columns={'備考2':'運賃n缶分'})
 
+
         # valid_ship_date有効な出荷日を求める
-        valid_ship_date = ValidShipDateCheck()
+        valid_ship_date = ValidShipDateCheck(orderDate)
         df_order['isExistShipDate'] = df_order['出荷予定日'].map(
                                                   valid_ship_date.date_isExist)
         df_order['isExistDeliDate'] = df_order['納期'].map(

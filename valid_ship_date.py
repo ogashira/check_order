@@ -1,27 +1,106 @@
+import sys
 import platform
+import os
+module_path = r'\\192.168.1.247\共有\技術課ﾌｫﾙﾀﾞ\200. effit_data\ﾏｽﾀ\sql_python_module'
+if platform.system() == 'Linux':
+    module_path = r'/mnt/public/技術課ﾌｫﾙﾀﾞ/200. effit_data/ﾏｽﾀ/sql_python_module'
+
+sys.path.append(os.path.abspath(module_path))
+
 import csv
 import datetime
 from re import I
-from typing import List
+from typing import List, Tuple
+from select_data import ISelectData, SelectCalenderUnsouya, SelectCalenderToyo
 
 from pandas.core.reshape.merge import _items_overlap_with_suffix
 
 class ValidShipDateCheck:
 
-    def __init__(self)-> None:
-        file: str = './order_holiday.csv'
-        if platform.system() == 'Windows':
-            file = f'//192.168.1.247/共有/受注check/master/order_holiday.csv'
-        if platform.system() == 'Linux':
-            file = f'/mnt/public/受注check/master/order_holiday.csv'
-        if platform.system() == 'Darwin':
-            file = f'/Volumes/共有/受注check/master/order_holiday.csv'
+    def __init__(self, orderDate:str)-> None:
 
-        self.__holiday_mtx: List[List[str]] = []
-        with open(file, newline='', encoding='cp932') as f:
-            reader = csv.reader(f)
-            next(reader) # 1行目をスキップ
-            self.__holiday_mtx = [row for row in reader]
+        minYM, maxYM = self._create_minYM_maxYM(orderDate)
+        calenToyo:SelectCalenderToyo = SelectCalenderToyo(minYM, maxYM)
+        calenUnso:SelectCalenderUnsouya = SelectCalenderUnsouya(minYM, maxYM)
+
+        calenToyo_col, calenToyo_data = calenToyo.select_data()
+        calenUnso_col, calenUnso_data = calenUnso.select_data()
+        '''
+        ['YYYY/MM/DD', '曜日', '東洋休日', '運送屋休日']
+        [['2026/1/1', '木', '休', '休'], ['2026/1/2', '金', '休', '休'],...]
+        の形にする。
+        '''
+        try:
+            self._holiday_mtx = \
+                  self._create_holiday_mtx(calenToyo_data, calenUnso_data)
+        except Exception as e:
+            print(e)
+            print('処理を中止します')
+            sys.exit(1)
+
+        ''' self._holiday_mtx = 
+        [['2026/1/1', '木', '休', '休'], ['2026/1/2', '金', '休', '休'], ['2026/1/3', '土', '休', '休'], ['2026/1/4', '日', '休', '休'], ['2026/1/5', '月', '', ''], ['2026/1/6', '火', '', ''], ['2026/1/7', '水', '', ''], ['2026/1/8', '木', '', ''],
+        '''
+
+    def _create_holiday_mtx(self, toyo:List[List[str]], 
+                            unso:List[List[str]])-> List[List[str]]:
+
+        '''toyo, unso = ['202607','03','金',' '], ['202607','04','土','1']...]
+        '''
+
+        if len(toyo) != len(unso):
+            raise Exception("東洋休日と運送屋休日のデータ数が合いません")
+        
+        holidays: List[List[str]] = []
+        for i in range(len(toyo)): 
+            YYYY_MM_DD = f'{toyo[i][0][:4]}/{toyo[i][0][4:]}/{toyo[i][1]}'
+            youbi = toyo[i][2]
+            toyo_holiday = ''
+            if toyo[i][3] == '1':
+                toyo_holiday = '休'
+            unso_holiday = ''
+            if unso[i][3] == '1':
+                unso_holiday = '休'
+
+            inner: List[str] = [YYYY_MM_DD, youbi, toyo_holiday, unso_holiday]
+
+            holidays.append(inner)
+
+        return holidays
+
+
+    def _create_minYM_maxYM(self, orderDate: str)-> Tuple:
+        '''
+        minM: 出荷日の月の前月
+        maxM: 出荷日の月の翌月
+        '''
+        orderY = orderDate[:4]
+        orderM = orderDate[4:6]
+        if orderM == "12":
+            minM = str(int(orderM) - 1)
+            minY = orderY
+            maxM = "01"
+            maxY = str(int(orderY) + 1)
+        elif orderM == "01":
+            minM = "12"
+            minY = str(int(orderY) - 1)
+            maxM = str(int(orderM) + 1)
+            maxY = orderY
+        else:
+            minM = str(int(orderM) - 1)
+            minY = orderY
+            maxM = str(int(orderM) + 1)
+            maxY = orderY
+
+        if len(maxM) == 1:
+            maxM = "0" + maxM
+        if len(minM) == 1:
+            minM = "0" + minM
+
+        maxYM = "'" + maxY + maxM + "'"
+        minYM = "'" + minY + minM + "'"
+
+        return minYM, maxYM
 
 
     def date_isExist(self, s_date: str) -> bool:
@@ -31,7 +110,7 @@ class ValidShipDateCheck:
         d_date = datetime.datetime.strptime(s_date, '%Y/%m/%d')
         isExist: bool = False
 
-        for line in self.__holiday_mtx:
+        for line in self._holiday_mtx:
             if d_date == datetime.datetime.strptime(line[0], '%Y/%m/%d'):
                 isExist = True
                 return isExist
@@ -60,7 +139,7 @@ class ValidShipDateCheck:
         d_date = datetime.datetime.strptime(s_date, '%Y/%m/%d')
         isHaulerHoliday: bool = False
         
-        for line in self.__holiday_mtx:
+        for line in self._holiday_mtx:
             if d_date == datetime.datetime.strptime(line[0], '%Y/%m/%d'):
                 if line[3] == '休':
                     isHaulerHoliday = True
@@ -77,7 +156,7 @@ class ValidShipDateCheck:
         d_date = datetime.datetime.strptime(s_date, '%Y/%m/%d')
         isToyoHoliday: bool = False
         
-        for line in self.__holiday_mtx:
+        for line in self._holiday_mtx:
             if d_date == datetime.datetime.strptime(line[0], '%Y/%m/%d'):
                 if line[2] == '休':
                     isToyoHoliday = True
@@ -120,9 +199,9 @@ class ValidShipDateCheck:
         
         ship_row: int = 0 
         i: int = 0
-        for i in range(len(self.__holiday_mtx)):
+        for i in range(len(self._holiday_mtx)):
             if d_deli_date == datetime.datetime.strptime(
-                                 self.__holiday_mtx[i][0], '%Y/%m/%d'):
+                                 self._holiday_mtx[i][0], '%Y/%m/%d'):
                 ship_row = i
 
 
@@ -134,11 +213,11 @@ class ValidShipDateCheck:
         当社の休日のみ考慮し、運送屋の休日は考慮しない
         '''
         if lead_time == 0:
-            while self.__holiday_mtx[ship_row][2] == '休':
+            while self._holiday_mtx[ship_row][2] == '休':
                 ship_row -= 1
             if ship_row < 0:
                 return valid_ship_date # 'hoge/hoge/hoge'
-            valid_ship_date = self.__holiday_mtx[ship_row][0]
+            valid_ship_date = self._holiday_mtx[ship_row][0]
             return to_yyyy_mm_dd(valid_ship_date)
 
         '''
@@ -146,7 +225,7 @@ class ValidShipDateCheck:
         運送屋の休日はカウントしない
         '''
         while lead_time > 0:
-            if self.__holiday_mtx[ship_row][3] == '休':
+            if self._holiday_mtx[ship_row][3] == '休':
                 ship_row -= 1
                 continue
             ship_row -= 1
@@ -154,13 +233,13 @@ class ValidShipDateCheck:
         
 
         # ship_rowが東洋または運送屋の休日だったら更にデクリメントする
-        while (self.__holiday_mtx[ship_row][2] == '休' or 
-                             self.__holiday_mtx[ship_row][3] == '休'):
+        while (self._holiday_mtx[ship_row][2] == '休' or 
+                             self._holiday_mtx[ship_row][3] == '休'):
             ship_row -= 1
 
         if ship_row < 0 :
             return valid_ship_date # 'hoge/hoge/hoge'
 
-        valid_ship_date = self.__holiday_mtx[ship_row][0]
+        valid_ship_date = self._holiday_mtx[ship_row][0]
         return to_yyyy_mm_dd(valid_ship_date)
 
