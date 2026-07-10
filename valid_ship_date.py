@@ -1,17 +1,11 @@
 import sys
 import platform
 import os
-module_path = r'\\192.168.1.247\共有\技術課ﾌｫﾙﾀﾞ\200. effit_data\ﾏｽﾀ\sql_python_module'
-if platform.system() == 'Linux':
-    module_path = r'/mnt/public/技術課ﾌｫﾙﾀﾞ/200. effit_data/ﾏｽﾀ/sql_python_module'
-
-sys.path.append(os.path.abspath(module_path))
-
 import csv
 import datetime
 from re import I
 from typing import List, Tuple
-from select_data import ISelectData, SelectCalenderUnsouya, SelectCalenderToyo
+from select_data import SelectCalenderUnsouya, SelectCalenderToyo
 
 from pandas.core.reshape.merge import _items_overlap_with_suffix
 
@@ -39,7 +33,10 @@ class ValidShipDateCheck:
             sys.exit(1)
 
         ''' self._holiday_mtx = 
-        [['2026/1/1', '木', '休', '休'], ['2026/1/2', '金', '休', '休'], ['2026/1/3', '土', '休', '休'], ['2026/1/4', '日', '休', '休'], ['2026/1/5', '月', '', ''], ['2026/1/6', '火', '', ''], ['2026/1/7', '水', '', ''], ['2026/1/8', '木', '', ''],
+        [['2026/1/1', '木', '休', '休'], ['2026/1/2', '金', '休', '休'], 
+        ['2026/1/3', '土', '休', '休'], ['2026/1/4', '日', '休', '休'], 
+        ['2026/1/5', '月', '', ''], ['2026/1/6', '火', '', ''], 
+        ['2026/1/7', '水', '', ''], ['2026/1/8', '木', '', ''],...],
         '''
 
     def _create_holiday_mtx(self, toyo:List[List[str]], 
