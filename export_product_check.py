@@ -1,5 +1,5 @@
 import platform
-import csv
+import openpyxl
 from typing import List
 import pandas as pd
 from get_idx import GetIdx
@@ -9,25 +9,28 @@ class ExportProductCheck:
 
     def __init__(self, df_mdestn: pd.DataFrame)-> None:
 
-        file_nhm: str = './n&h&m_modify.csv'
+        file_nhm: str = './n&h&m_modify.xlsx'
         if platform.system() == 'Windows':
-            file_nhm = f'//192.168.1.247/共有/受注check/master/n&h&m_modify.csv'
+            file_nhm = f'//192.168.1.247/共有/受注check/master/n&h&m_modify.xlsx'
         if platform.system() == 'Linux':
-            file_nhm = f'/mnt/public/受注check/master/n&h&m_modify.csv'
+            file_nhm = f'/mnt/public/受注check/master/n&h&m_modify.xlsx'
         if platform.system() == 'Darwin':
-            file_nhm = f'/Volumes/共有/受注check/master/n&h&m_modify.csv'
+            file_nhm = f'/Volumes/共有/受注check/master/n&h&m_modify.xlsx'
 
-        self.__nhm_mtx: List[List[str]] = []
-        with open(file_nhm, newline='', encoding='cp932') as f:
-            reader = csv.reader(f)
-            next(reader) # 1行目をスキップ
-            self.__nhm_mtx = [row for row in reader]
+        wb = openpyxl.load_workbook(file_nhm)
+        ws = wb['n&h&m_modify']
+
+        # 各セルの値がNoneなら""に置換, それ以外はそのまま
+        self.__nhm_mtx = [[cell if cell is not None else "" for cell in row] 
+                          for row in ws.iter_rows(min_row=2, values_only=True)
+                          ]
 
         # df_mdestn = MDESTN_U2002のDataFrame をリストにする
         self.__mdestn_mtx: List[List[str]] = df_mdestn.to_numpy().tolist()
         self.__mdestn_col: List[str] = df_mdestn.columns.tolist()
         self.__getIdx = GetIdx()
 
+    
 
     def is_export(self, df_row)-> bool:
         '''

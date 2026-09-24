@@ -3,6 +3,7 @@ import pandas as pd
 from typing import List, Any, Tuple
 from abc import ABC, abstractmethod
 from sql_server import SqlServer as SqlServer
+# TODO これは使っていない
 from sql_server_test import SqlServer as TestSqlServer
 
 
