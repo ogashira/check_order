@@ -6,10 +6,12 @@ import sys
 class UserInterface:
 
     def __init__(self)-> None:
-        self.__pcNames:Dict[str, str] = {'toyo-pc04': '000240', 
+        self.__pcNames:Dict[str, str] = {'toyo-pc03': '000292',
+                                         'toyo-pc04': '000240', 
                                          'toyo-pc05': '000210',
                                          'toyo-pc13': '000440',
                                          'toyo-pc12': '000410',
+                                         'TOYO-PC03': '000292',
                                          'TOYO-PC04': '000240', 
                                          'TOYO-PC05': '000210',
                                          'TOYO-PC13': '000440',
