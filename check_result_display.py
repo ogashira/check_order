@@ -22,6 +22,7 @@ class CheckResultDisplay:
         destination          = df_row['destination']
         isExistExportProduct = df_row['isExistExportProduct']
         convert_unit         = df_row['変換単位']
+        toyo_untin           = df_row['toyo運賃']
 
         if not isExistShipDate:
             return '休日表に出荷予定日が無し\n'
@@ -62,6 +63,9 @@ class CheckResultDisplay:
         if non_export_success or export_success:
             errors.append('レ')
         # --- Build error message if not success ---
+
+        if toyo_untin > 0:
+            errors.append('東洋運賃を確認してください')
         
         if isShipHolidayToyo:
             errors.append('出荷予定日が休日')

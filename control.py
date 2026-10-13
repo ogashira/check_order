@@ -138,20 +138,7 @@ class Control:
         df_order[['変換数量', '変換単位']] = df_order.apply(
                                             convert_unit.convert_unit, axis = 1)
 
-        # check列に最終警告を記入する
-        check_result_display = CheckResultDisplay()
-        df_order['Check'] = df_order.apply(
-                               check_result_display.check_result_display, axis=1)
-        staff: str = df_order['担当者名称'].iloc[0]
-        order_date: str = orderDate_and_userId[0]
 
-
-        df_order2= pd.DataFrame(df_order[["受注No", "出荷予定日", "得意先コード", 
-                              "納入先コード", "納入先", "得意先名称1", 
-                              "納入先名称1", "納入先名称2", "品名", 
-                              "受注数量", "受注単位", "変換数量", 
-                              "変換単位", "備考1", "納期", "運賃n缶分", 
-                              "Check"]])
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>        
         '''
@@ -183,7 +170,7 @@ class Control:
 
         
         # 得意先コード、納入先コードでソートしておく
-        df_order2 = df_order2.sort_values(by=['得意先コード','納入先コード'])
+        df_order = df_order.sort_values(by=['得意先コード','納入先コード'])
 
 
         def get_cans(df_row)->int:
@@ -207,9 +194,9 @@ class Control:
             return kg
 
         # cansカラムに缶数を詰める
-        df_order2['cans'] = df_order2.apply(get_cans, axis=1) 
+        df_order['cans'] = df_order.apply(get_cans, axis=1) 
         # kgカラムにkgを詰める
-        df_order2['kg'] = df_order2.apply(get_kg, axis=1) 
+        df_order['kg'] = df_order.apply(get_kg, axis=1) 
 
 
         def calc_ncan(df_row):
@@ -223,18 +210,38 @@ class Control:
 
             ncan = 0
             if tup in seikyusaki_codes:
-                ncan = df_order2.loc[(df_order2['得意先コード']== tokui_code) 
-                    & (df_order2['納入先コード']==nonyu_code),'cans'].sum()
+                ncan = df_order.loc[(df_order['得意先コード']== tokui_code) 
+                    & (df_order['納入先コード']==nonyu_code),'cans'].sum()
             return ncan
 
         # 運賃ｎ缶分に追加があった場合はncanカラムに正しい缶数を入れる
-        df_order2['ncan'] = df_order2.apply(calc_ncan, axis = 1)
+        df_order['ncan'] = df_order.apply(calc_ncan, axis = 1)
 
         # toyo運賃を求める
         toyoUntin = ToyoUntin(seikyusaki, tyuukei_ari, tyuukei_nasi, seikyusaki_codes)
-        df_order2['toyo運賃'] = df_order2.apply(toyoUntin.get_toyo_untin, axis=1)
+        df_order['toyo運賃'] = df_order.apply(toyoUntin.get_toyo_untin, axis=1)
 
-        df_order2 = df_order2[[
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>        
+
+        # check列に最終警告を記入する
+        check_result_display = CheckResultDisplay()
+        df_order['Check'] = df_order.apply(
+                               check_result_display.check_result_display, axis=1)
+        staff: str = df_order['担当者名称'].iloc[0]
+        order_date: str = orderDate_and_userId[0]
+
+
+        '''
+        df_order2= pd.DataFrame(df_order[["受注No", "出荷予定日", "得意先コード", 
+                              "納入先コード", "納入先", "得意先名称1", 
+                              "納入先名称1", "納入先名称2", "品名", 
+                              "受注数量", "受注単位", "変換数量", 
+                              "変換単位", "備考1", "納期", "運賃n缶分", 
+                              "Check"]])
+                              '''
+
+        df_order2 = df_order[[
                 '受注No', '出荷予定日', '得意先コード',
                 '納入先コード', '納入先', '得意先名称1',
                 '納入先名称1', '納入先名称2', '品名',
@@ -243,11 +250,9 @@ class Control:
                 '運賃n缶分', 'ncan', 'toyo運賃', 'Check' ]]
 
         # 受注No順にソートしなおす。
-        df_order2 = df_order2.sort_values(by=['受注No'])
+        df_order2 = df_order2.sort_values(by='受注No') #type: ignore
         df_order2.reset_index(drop= True, inplace= True)
 
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>        
 
         # excelと同じものをcsvにも出しておく（念のため）
         df_order2.to_csv('./test.csv', encoding='cp932')
