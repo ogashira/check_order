@@ -4,6 +4,7 @@ __pycache__/
 *.ini
 *.ini~
 *.xlsx
+*.csv
 ./yaml/
 *.yaml
 *.bat

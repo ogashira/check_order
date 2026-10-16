@@ -25,8 +25,15 @@ class ToyoUntin:
         toyo_untin:float = 0
         tokui_code = df_row['得意先コード']
         nonyu_code = df_row['納入先コード']
-        cans = df_row['ncan']
+        ncan = int(df_row['ncan'])
+        tekiyou_cans = 0
+        if df_row['運賃n缶分'] != '' and df_row['運賃n缶分'] != ' ':
+            tekiyou_cans = int(df_row['運賃n缶分'])
         qty = df_row['kg']
+
+        # ncanとtekiyou_cansの大きい方を基本運賃のcansにする
+        cans = max(ncan, tekiyou_cans)
+
 
         tup = (tokui_code, nonyu_code)
         if nonyu_code == ' ':
